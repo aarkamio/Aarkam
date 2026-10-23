@@ -2,7 +2,8 @@
 ### High-Performance, Distributed, Air-Gapped Object Storage Infrastructure
 **Official Customer Portal (AarkamCP)**: [https://aarkam.io/](https://aarkam.io/)  
 **License**: [Aarkam Commercial Enterprise Sovereign License (ASCEL-v1.0)](LICENSE)  
-**Current Release**: `V1.0.0-Beta` ([Release Notes](Releases/V1.0.0-Beta/RELEASE_NOTES.md))
+**Current Production Release**: `v2.5.0-GA` — **Tier 1: Aarkam Rokka Sovereign Engine** ([Release Notes](Releases/Aarkam%20Rokka%20Sovereign%20Engine/v2.5.0/RELEASE_NOTES.md) | [Air-Gapped Installation Guide](Releases/Aarkam%20Rokka%20Sovereign%20Engine/v2.5.0/INSTALLATION_GUIDE.md))  
+**Previous Preview Release**: `V1.0.0-Beta` ([Release Notes](Releases/V1.0.0-Beta/RELEASE_NOTES.md))
 
 ---
 
