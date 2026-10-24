@@ -1,8 +1,10 @@
 # Unpacked release working directories (only .zip archives and docs are tracked)
 Releases/**/Aarkam.AM/
 Releases/**/AarkamIO/
-Releases/**/Abodi/
+Releases/V1.0.0-Beta/Abodi/
 Releases/**/Rokka/
+Releases/**/win/
+Releases/**/linux/
 Releases/**/win-x64/
 Releases/**/linux-x64/
 Releases/**/bundles/
