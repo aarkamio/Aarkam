@@ -1,0 +1,2 @@
+1ac1d100d779f5d052f5275568d89b9e52bc891a7cfbbe1152ee05efbe37c9ec  aarkamio-v1.0.0-linux-x64.zip
+fd61e94ec60e4567fc188e4b66e31df4d91548fbf03369ab61e1b4fa62981fb0  aarkamio-v1.0.0-win-x64.zip
