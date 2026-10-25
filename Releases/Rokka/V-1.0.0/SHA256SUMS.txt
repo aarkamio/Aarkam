@@ -1,0 +1,6 @@
+ad2122fcf77d6834400323904e94767ff61e8f92e857cae8455fddc583806792  rokka-coordinator-v1.0.0-linux-x64.zip
+cabe8b42c8f1fdc9bd529e27dfb3a49834b18815056b96f2007cf1e8175db934  rokka-coordinator-v1.0.0-win-x64.zip
+d2214e0f168fd666a135d09dce65477eb5bd0061ad63c5b2c7fb51cc512eecf0  rokka-gateway-v1.0.0-linux-x64.zip
+f7925f02f513aeda3d52907661213e527a466f79ce3ad7055d6fe446b4c2f344  rokka-gateway-v1.0.0-win-x64.zip
+e28d340b0aa589eb0272851b0e0aa1fb1800ff40a609e0bc84d0cc41dc53b174  rokka-v1.0.0-linux-x64.zip
+f9d0914fa90796089edca88258688bf214ab2d3e3f3a04aab789bdeeeeba79ae  rokka-v1.0.0-win-x64.zip

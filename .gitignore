@@ -1,15 +1,10 @@
 # Unpacked release working directories (only .zip archives and docs are tracked)
 Releases/**/Aarkam.AM/
 Releases/**/AarkamIO/
-Releases/V1.0.0-Beta/Abodi/
-Releases/**/Rokka/
 Releases/**/win/
 Releases/**/linux/
 Releases/**/win-x64/
 Releases/**/linux-x64/
-Releases/**/bundles/
-Releases/**/v-2.5.0/
-Releases/Rokka Sovereign Engine/
 
 # Packages exceeding GitHub 100MB limit (stored locally in Releases, excluded from git blobs)
 Releases/**/rokka-substrate-*.zip
