@@ -22,7 +22,7 @@ sequenceDiagram
     participant Vault as Aarkam HQ Offline Master Signer
 
     Admin->>Node: 1. Extract release binaries & boot systemd services
-    Node-->>Admin: Unsealed boot -> Redirect to https://<node-ip>:5001/genesis
+    Node-->>Admin: Unsealed boot -> Redirect to https://<node-ip>:57771/genesis
     Admin->>Node: 2. Copy Physical Hardware Fingerprint (ARK-FP-...)
     Admin->>CP: 3. Connect to https://aarkam.io/ & open Current Subscription
     Admin->>CP: 4. Click 'Bind Fingerprint' -> Paste ARK-FP-...
@@ -30,7 +30,7 @@ sequenceDiagram
     CP->>Vault: Check PaymentStatus ('Paid' vs 'Beta') & sign Genesis Bundle
     Vault-->>CP: Cryptographically Signed .arkbundle
     CP-->>Admin: 5. Download Aarkam-Genesis-<ClusterCode>.arkbundle
-    Admin->>Node: 6. Upload .arkbundle to https://<node-ip>:5001/genesis
+    Admin->>Node: 6. Upload .arkbundle to https://<node-ip>:57771/genesis
     Node->>Node: 7. Execute 8-Layer Anti-Hacking Security Audit
     Node->>Node: 8. Hash SuperAdmin password locally (PBKDF2 SHA-256)
     Node->>Node: 9. Irreversible State Lock: IsBootstrapped = true
@@ -41,7 +41,7 @@ sequenceDiagram
 
 ## 2. Step 1: Pre-Flight Environment Preparation
 
-Execute on all cluster nodes (Ubuntu Server 24.04 LTS / 22.04 LTS):
+Execute on all cluster nodes (Ubuntu Server 24.04 LTS / 22.04 LTS / RHEL 8/9):
 
 ```bash
 # 1. Update system packages
@@ -65,12 +65,13 @@ sudo chmod 750 /opt/aarkam /var/lib/aarkam
 
 ## 3. Step 2: Deploy Abodi Node Daemon (Every Storage Node)
 
-The **Abodi** daemon runs on every physical host, providing real-time hardware health profiling and hosting the embedded **Kdouja** metadata engine.
+The **Abodi** daemon runs on every physical host, providing real-time hardware health profiling and hosting the embedded **Kdouja** Direct I/O storage engine.
 
 1. Copy the `Abodi` release binaries to `/opt/aarkam/abodi/`:
    ```bash
-   sudo cp -r /path/to/Releases/V1.0.0-Beta/Abodi/* /opt/aarkam/abodi/
+   sudo cp -r Releases/Abodi/V-1.0.0/linux/* /opt/aarkam/abodi/
    sudo chown -R aarkam:aarkam /opt/aarkam/abodi/
+   sudo chmod +x /opt/aarkam/abodi/Abodi
    ```
 
 2. Create the systemd service `/etc/systemd/system/aarkam-abodi.service`:
@@ -85,7 +86,7 @@ The **Abodi** daemon runs on every physical host, providing real-time hardware h
    User=aarkam
    Group=aarkam
    WorkingDirectory=/opt/aarkam/abodi
-   ExecStart=/usr/bin/dotnet /opt/aarkam/abodi/Abodi.dll --urls "http://0.0.0.0:9400"
+   ExecStart=/opt/aarkam/abodi/Abodi
    Restart=always
    RestartSec=5
    LimitNOFILE=1048576
@@ -95,6 +96,7 @@ The **Abodi** daemon runs on every physical host, providing real-time hardware h
    [Install]
    WantedBy=multi-user.target
    ```
+   *(Abodi natively binds to `https://0.0.0.0:57776` for telemetry and `https://0.0.0.0:57775` for Kdouja Direct I/O data streaming).*
 
 3. Enable and start the service:
    ```bash
@@ -111,11 +113,12 @@ Deploy on the 3 or 5 quorum coordinator nodes. Rokka executes Raft consensus and
 
 1. Copy `Rokka` release binaries to `/opt/aarkam/rokka/`:
    ```bash
-   sudo cp -r /path/to/Releases/V1.0.0-Beta/Rokka/* /opt/aarkam/rokka/
+   sudo cp -r Releases/Rokka/V-1.0.0/linux/* /opt/aarkam/rokka/
    sudo chown -R aarkam:aarkam /opt/aarkam/rokka/
+   sudo chmod +x /opt/aarkam/rokka/rokka-coordinator /opt/aarkam/rokka/rokka-gateway
    ```
 
-2. Create `/etc/systemd/system/aarkam-rokka.service`:
+2. Create `/etc/systemd/system/aarkam-rokka-coordinator.service`:
    ```ini
    [Unit]
    Description=Aarkam Rokka Consensus & Storage Coordinator
@@ -127,7 +130,7 @@ Deploy on the 3 or 5 quorum coordinator nodes. Rokka executes Raft consensus and
    User=aarkam
    Group=aarkam
    WorkingDirectory=/opt/aarkam/rokka
-   ExecStart=/usr/bin/dotnet /opt/aarkam/rokka/Rokka.Coordinator.dll --urls "https://0.0.0.0:9100"
+   ExecStart=/opt/aarkam/rokka/rokka-coordinator
    Restart=always
    RestartSec=5
    LimitNOFILE=1048576
@@ -136,37 +139,62 @@ Deploy on the 3 or 5 quorum coordinator nodes. Rokka executes Raft consensus and
    [Install]
    WantedBy=multi-user.target
    ```
+   *(Binds to `https://0.0.0.0:57774` for HTTPS / mTLS and `http://0.0.0.0:7774` for Raft gRPC).*
 
-3. Start Rokka:
+3. Create `/etc/systemd/system/aarkam-rokka-gateway.service`:
+   ```ini
+   [Unit]
+   Description=Aarkam Rokka Sovereign S3 REST Gateway
+   After=network.target aarkam-rokka-coordinator.service
+   Requires=aarkam-rokka-coordinator.service
+
+   [Service]
+   Type=simple
+   User=aarkam
+   Group=aarkam
+   WorkingDirectory=/opt/aarkam/rokka
+   ExecStart=/opt/aarkam/rokka/rokka-gateway
+   Restart=always
+   RestartSec=5
+   LimitNOFILE=1048576
+   Environment=ASPNETCORE_ENVIRONMENT=Production
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+   *(Binds to `https://0.0.0.0:57772` for HTTPS S3 REST SigV4 and `http://0.0.0.0:7772` for HTTP S3 REST).*
+
+4. Start Rokka services:
    ```bash
    sudo systemctl daemon-reload
-   sudo systemctl enable --now aarkam-rokka
+   sudo systemctl enable --now aarkam-rokka-coordinator aarkam-rokka-gateway
    ```
 
 ---
 
-## 5. Step 4: Deploy AarkamIO Control Plane & S3 Gateway
+## 5. Step 4: Deploy AarkamIO Control Plane & Web Console
 
 Deploy on the gateway nodes fronting the cluster.
 
 1. Copy `AarkamIO` binaries to `/opt/aarkam/gateway/`:
    ```bash
-   sudo cp -r /path/to/Releases/V1.0.0-Beta/AarkamIO/* /opt/aarkam/gateway/
+   sudo cp -r Releases/AarkamIO/V-1.0.0/linux/* /opt/aarkam/gateway/
    sudo chown -R aarkam:aarkam /opt/aarkam/gateway/
+   sudo chmod +x /opt/aarkam/gateway/aarkamio
    ```
 
 2. Create `/etc/systemd/system/aarkam-io.service`:
    ```ini
    [Unit]
    Description=Aarkam.IO Sovereign Storage Gateway & Web Console
-   After=network.target aarkam-rokka.service
+   After=network.target aarkam-rokka-coordinator.service
 
    [Service]
    Type=simple
    User=aarkam
    Group=aarkam
    WorkingDirectory=/opt/aarkam/gateway
-   ExecStart=/usr/bin/dotnet /opt/aarkam/gateway/Aarkam.dll --urls "https://0.0.0.0:5001;http://0.0.0.0:5000"
+   ExecStart=/opt/aarkam/gateway/aarkamio --urls "https://0.0.0.0:57771;http://0.0.0.0:7771"
    Restart=always
    RestartSec=5
    LimitNOFILE=1048576
@@ -188,15 +216,19 @@ Deploy on the gateway nodes fronting the cluster.
 
 1. Open your browser and navigate to the AarkamIO node:
    ```text
-   https://<cluster-node-ip>:5001
+   https://<cluster-node-ip>:57771
    ```
 2. Because the cluster is currently unsealed (`IsBootstrapped = false`), the gateway automatically redirects you to:
    ```text
-   https://<cluster-node-ip>:5001/genesis
+   https://<cluster-node-ip>:57771/genesis
    ```
 3. **Step 1 of the Genesis Ceremony** displays the node's cryptographic hardware identity:
-   - **Cluster Hardware Fingerprint**: e.g., `ARK-FP-A66E9900388CDCA0743BE86FE0100778B2D5392D...`
-4. Click **"Copy Fingerprint"** or **"Download Hardware Identity JSON"**.
+   - **Cluster Hardware Fingerprint**: e.g., `ARK-FP-A66E9900-388CDCA0-743BE86F`
+4. Click **"Copy Fingerprint"** or query via the operator CLI:
+   ```bash
+   cd Releases/Am-Cli/V-1.0.0/linux
+   ./am cluster fingerprint
+   ```
 
 ---
 
@@ -226,7 +258,7 @@ Deploy on the gateway nodes fronting the cluster.
 ## 8. Step 7: Execute Genesis Ceremony & Seal the Cluster
 
 1. Transfer the `.arkbundle` file across your air-gap network to your management workstation.
-2. Return to the browser at `https://<cluster-node-ip>:5001/genesis`.
+2. Return to the browser at `https://<cluster-node-ip>:57771/genesis`.
 3. Proceed to **Step 2: Upload Genesis Ceremony Bundle**:
    - Select and upload `Aarkam-Genesis-RUH-PROD-POD01.arkbundle`.
 4. In **Step 3: Root Security Initialization**:
@@ -248,13 +280,13 @@ Deploy on the gateway nodes fronting the cluster.
 
 ## 9. Step 8: Post-Activation S3 Verification
 
-Verify object storage functionality using the standard AWS CLI:
+Verify object storage functionality using the standard AWS CLI pointing to Rokka S3 Gateway on Port `57772`:
 
 ```bash
-# Configure local S3 credentials
+# Configure local S3 credentials pointing to Port 57772 HTTPS
 export AWS_ACCESS_KEY_ID="<your-access-key>"
 export AWS_SECRET_ACCESS_KEY="<your-secret-key>"
-export AWS_ENDPOINT_URL="https://<cluster-node-ip>:8443"
+export AWS_ENDPOINT_URL="https://<cluster-node-ip>:57772"
 
 # 1. Create a sovereign storage bucket
 aws --endpoint-url $AWS_ENDPOINT_URL --no-verify-ssl s3 mb s3://enterprise-backups

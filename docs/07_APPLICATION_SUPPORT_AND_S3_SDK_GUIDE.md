@@ -11,7 +11,7 @@ The **AarkamIO S3 Gateway** implements full protocol compliance with the standar
 
 ```mermaid
 flowchart LR
-    ClientApp["Enterprise Application (Python / Go / Java / .NET / Node)"] -->|"AWS Signature Version 4 (SigV4)"| S3Gateway["AarkamIO S3 Gateway (Ports: 8080 HTTP / 8443 HTTPS)"]
+    ClientApp["Enterprise Application (Python / Go / Java / .NET / Node)"] -->|"AWS Signature Version 4 (SigV4)"| S3Gateway["AarkamIO S3 Gateway (Ports: 7772 HTTP / 57772 HTTPS)"]
     S3Gateway -->|"Chunk Erasure Coding"| StorageFabric["Rokka & Ahmodi Storage Mesh"]
 ```
 
@@ -56,7 +56,7 @@ from botocore.client import Config
 # Initialize Aarkam Sovereign S3 Client
 s3_client = boto3.client(
     's3',
-    endpoint_url='https://storage.aarkam.internal:8443',
+    endpoint_url='https://storage.aarkam.internal:57772',
     aws_access_key_id=os.getenv('AARKAM_ACCESS_KEY', 'AKIA_PROD_APP01'),
     aws_secret_access_key=os.getenv('AARKAM_SECRET_KEY', 'SEC_KEY_PROD_SECRET_XYZ'),
     region_name='sa-central-1',
@@ -129,7 +129,7 @@ func main() {
 		Region:       "sa-central-1",
 		Credentials:  credentials.NewStaticCredentialsProvider("AKIA_PROD_APP01", "SEC_KEY_PROD_SECRET_XYZ", ""),
 		HTTPClient:   httpClient,
-		BaseEndpoint: aws.String("https://storage.aarkam.internal:8443"),
+		BaseEndpoint: aws.String("https://storage.aarkam.internal:57772"),
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
@@ -179,7 +179,7 @@ public class Program
     {
         var config = new AmazonS3Config
         {
-            ServiceURL = "https://storage.aarkam.internal:8443",
+            ServiceURL = "https://storage.aarkam.internal:57772",
             ForcePathStyle = true,
             AuthenticationRegion = "sa-central-1"
         };
@@ -218,7 +218,7 @@ import { NodeHttpHandler } from "@smithy/node-http-handler";
 import * as https from "https";
 
 const s3Client = new S3Client({
-  endpoint: "https://storage.aarkam.internal:8443",
+  endpoint: "https://storage.aarkam.internal:57772",
   region: "sa-central-1",
   credentials: {
     accessKeyId: process.env.AARKAM_ACCESS_KEY || "AKIA_PROD_APP01",
@@ -267,7 +267,7 @@ The standard enterprise MinIO Client (`mc`) is fully compatible with AarkamIO:
 
 ```bash
 # 1. Add AarkamIO alias
-mc alias set aarkam https://storage.aarkam.internal:8443 AKIA_PROD_APP01 SEC_KEY_PROD_SECRET_XYZ --insecure
+mc alias set aarkam https://storage.aarkam.internal:57772 AKIA_PROD_APP01 SEC_KEY_PROD_SECRET_XYZ --insecure
 
 # 2. List Buckets
 mc ls aarkam/

@@ -21,43 +21,46 @@ flowchart TD
     end
 
     subgraph Zone2["Zone 2: Storage Management Network (Isolated Admin Bastion)"]
-        AarkamIOWeb["AarkamIO Web Admin UI\n(Port: 5001 HTTPS)"]
-        AarkamIOS3["AarkamIO S3 REST Gateway\n(Ports: 8080 HTTP, 8443 HTTPS)"]
+        AarkamIOWeb["AarkamIO Web Admin UI\n(Port: 57771 HTTPS / Port: 7771 HTTP)"]
+        AarkamIOS3["Rokka S3 REST Gateway\n(Port: 57772 HTTPS / Port: 7772 HTTP)"]
     end
 
     subgraph Zone3["Zone 3: Private Storage & Consensus Fabric (Air-Gapped, MTU 9000)"]
-        RokkaConsensus["Rokka Raft Consensus Fabric\n(Port: 9100 TCP)"]
-        AhmodiData["Ahmodi Cauchy RS EC Data Fabric\n(Port: 9300 TCP)"]
-        KdoujaMeta["Kdouja Metadata Sync Fabric\n(Port: 9200 TCP)"]
-        AbodiTelemetry["Abodi Node Health & Profiler\n(Port: 9400 TCP)"]
+        RokkaConsensus["Rokka Raft Consensus Fabric\n(Port: 57774 HTTPS mTLS / Port: 7774 gRPC)"]
+        AbodiStorage["Abodi Kdouja Chunk Data Fabric\n(Port: 57775 gRPC mTLS / Port: 7775 gRPC)"]
+        AbodiTelemetry["Abodi Telemetry & Diagnostics\n(Port: 57776 HTTPS REST / Port: 7776 REST)"]
     end
 
-    S3Clients -->|"Port 8443 HTTPS (SigV4)"| FW1
-    AdminBrowsers -->|"Port 5001 HTTPS"| FW1
+    S3Clients -->|"Port 57772 HTTPS (SigV4)"| FW1
+    AdminBrowsers -->|"Port 57771 HTTPS"| FW1
     FW1 --> AarkamIOS3
     FW1 --> AarkamIOWeb
-    AarkamIOS3 <-->|"Cluster Fabric"| RokkaConsensus
-    RokkaConsensus <-->|"Data & Placement"| AhmodiData
-    RokkaConsensus <-->|"Metadata Index"| KdoujaMeta
-    AbodiTelemetry <-->|"Health Alarms"| RokkaConsensus
+    AarkamIOS3 <-->|"Cluster Fabric :57774"| RokkaConsensus
+    RokkaConsensus <-->|"Direct Chunk Data :57775"| AbodiStorage
+    AbodiTelemetry <-->|"Health Alarms :57774"| RokkaConsensus
 ```
 
 ---
 
 ## 2. Complete Ports & Protocol Matrix
 
+> [!NOTE]
+> **Why Port 5001 is NOT Used in Production**:  
+> In early ASP.NET Core developer templates, ports `5000` (HTTP) and `5001` (HTTPS) were standard local development defaults. For air-gapped sovereign environments, Aarkam standardizes strictly on dedicated port ranges (`777x` series for HTTP/internal gRPC and `5777x` series for TLS 1.3 / mTLS).
+
 | Port | Protocol | Traffic Direction | Source Zone | Destination Zone | Service / Component | Purpose & Description | Security & Encryption |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **5000** | TCP | Inbound | Admin Bastion / Internal | AarkamIO Gateway | AarkamIO Web Console | Cleartext Web UI (Auto-redirects to 5001 in production) | HTTP (Redirect only) |
-| **5001** | TCP | Inbound | Admin Bastion / SecOps | AarkamIO Gateway | AarkamIO Web Console | Secure Management UI, REST Admin API, and `/genesis` ceremony wizard | TLS 1.3 / AES-256-GCM |
-| **8080** | TCP | Inbound | Client Applications / VPC | AarkamIO Gateway | S3 REST Gateway | Standard S3 REST API (SigV4 authenticated) | Cleartext HTTP (Internal VPC) |
-| **8443** | TCP | Inbound | Client Applications / VPC | AarkamIO Gateway | S3 REST Gateway | Secure S3 REST API (SigV4 authenticated) | TLS 1.3 / AES-256-GCM |
-| **9100** | TCP | Bi-directional | Rokka Quorum Nodes | Rokka Quorum Nodes | Rokka Coordinator | Raft consensus RPC, leader election, and heartbeat synchronization | mTLS / Internal gRPC |
-| **9200** | TCP | Bi-directional | Storage Nodes (Abodi) | Storage Nodes (Abodi) | Embedded Kdouja | Distributed metadata state replication, LSM sync, and index broadcast | mTLS / High-speed binary |
-| **9300** | TCP | Bi-directional | Storage Nodes (Rokka) | Storage Nodes (Abodi) | Embedded Ahmodi | Cauchy Reed-Solomon EC chunk transmission, replication & re-silvering | Direct TCP Streaming / RoCEv2 |
-| **9400** | TCP | Bi-directional | Storage Nodes (Abodi) | Rokka Coordinator | Abodi Daemon | Real-time node telemetry, SMART disk alerts, IOPS metrics & health | mTLS / REST JSON |
-| **9500** | TCP | Bi-directional | Gateway / Rokka | SixFM Nodes | SixFM Vector Fabric | High-speed semantic vector embeddings query fabric (Enterprise only) | mTLS / gRPC |
-| **9090** | TCP | Inbound | Monitoring / Prometheus | All Nodes | Telemetry Exporter | Prometheus metrics scrape target (`/metrics`) | Token Authenticated HTTP |
+| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :--- |
+| **`57771`** | TCP | Inbound | Admin Bastion / SecOps | AarkamIO Gateway | AarkamIO Web Console | Secure Management UI, REST Admin API, and `/genesis` ceremony wizard | TLS 1.3 / AES-256-GCM / RSA-4096-PSS |
+| **`7771`** | TCP | Inbound | Admin Bastion / Internal | AarkamIO Gateway | AarkamIO Web Console | Cleartext Web UI Ingress (Auto-redirects to `57771` in production) | HTTP (Redirect only) |
+| **`57772`** | TCP | Inbound | Client Applications / VPC | Rokka Gateway | S3 REST Gateway | Secure S3 REST API (SigV4 authenticated) | TLS 1.3 / AES-256-GCM / SigV4 |
+| **`7772`** | TCP | Inbound | Client Applications / VPC | Rokka Gateway | S3 REST Gateway | Standard S3 REST API (SigV4 authenticated) | Cleartext HTTP (Internal VPC) |
+| **`57774`** | TCP | Bi-directional | Rokka Quorum Nodes | Rokka Quorum Nodes | Rokka Coordinator | Raft consensus RPC, leader election, and heartbeat synchronization | mTLS / Internal gRPC |
+| **`7774`** | TCP | Bi-directional | Rokka Quorum Nodes | Rokka Quorum Nodes | Rokka Coordinator | Internal cluster consensus and topology synchronization | HTTP/2 gRPC |
+| **`57775`** | TCP | Bi-directional | Storage Nodes (Abodi) | Rokka Gateway | Abodi (Kdouja) | Cauchy Reed-Solomon EC chunk streaming, replication & re-silvering | Direct TCP Streaming / mTLS |
+| **`7775`** | TCP | Intra-Node | Storage Nodes (Abodi) | Storage Nodes (Abodi) | Abodi (Kdouja) | Local intra-node direct block allocation and PageStore transport | Local IPC / gRPC (`127.0.0.1`) |
+| **`57776`** | TCP | Bi-directional | Storage Nodes (Abodi) | Rokka Coordinator | Abodi Daemon | Real-time node telemetry, SMART disk alerts, IOPS metrics & health | mTLS / REST JSON |
+| **`7776`** | TCP | Localhost | Monitoring / SRE | Storage Nodes (Abodi) | Abodi Daemon | Localhost liveness probe and health status | Cleartext HTTP (`127.0.0.1`) |
+| **`9090`** | TCP | Inbound | Monitoring / Prometheus | All Nodes | Telemetry Exporter | Prometheus metrics scrape target (`/metrics`) | Token Authenticated HTTP |
 
 ---
 
@@ -65,7 +68,7 @@ flowchart TD
 
 ### 3.1 Ubuntu / Debian (`ufw`) Implementation
 
-#### On Gateway Nodes (Hosting `AarkamIO`):
+#### On Gateway / Management Nodes (Hosting `AarkamIO` & `rokka-gateway`):
 ```bash
 # Reset UFW
 sudo ufw --force reset
@@ -76,17 +79,21 @@ sudo ufw default allow outgoing
 sudo ufw allow from 10.10.10.0/24 to any port 22 proto tcp comment 'Bastion SSH'
 
 # Allow Ingress Web UI and S3 API Gateway
-sudo ufw allow from 10.10.10.0/24 to any port 5001 proto tcp comment 'AarkamIO Admin UI'
-sudo ufw allow from 172.16.0.0/12 to any port 8443 proto tcp comment 'AarkamIO S3 HTTPS'
-sudo ufw allow from 172.16.0.0/12 to any port 8080 proto tcp comment 'AarkamIO S3 HTTP'
+sudo ufw allow from 10.10.10.0/24 to any port 57771 proto tcp comment 'AarkamIO Admin UI HTTPS'
+sudo ufw allow from 10.10.10.0/24 to any port 7771  proto tcp comment 'AarkamIO Admin UI HTTP'
+sudo ufw allow from 172.16.0.0/12 to any port 57772 proto tcp comment 'Rokka S3 HTTPS'
+sudo ufw allow from 172.16.0.0/12 to any port 7772  proto tcp comment 'Rokka S3 HTTP'
 
 # Allow Communication with Storage Fabric (Internal Subnet 192.168.100.0/24)
-sudo ufw allow from 192.168.100.0/24 to any port 9100:9400 proto tcp comment 'Aarkam Storage Fabric'
+sudo ufw allow from 192.168.100.0/24 to any port 57774 proto tcp comment 'Rokka Coordinator HTTPS'
+sudo ufw allow from 192.168.100.0/24 to any port 7774  proto tcp comment 'Rokka Coordinator gRPC'
+sudo ufw allow from 192.168.100.0/24 to any port 57775 proto tcp comment 'Abodi Storage Chunk Fabric'
+sudo ufw allow from 192.168.100.0/24 to any port 57776 proto tcp comment 'Abodi Telemetry REST'
 
 sudo ufw enable
 ```
 
-#### On Storage Nodes (Hosting `Abodi` + `Rokka`):
+#### On Storage Nodes (Hosting `Abodi` + `Rokka Coordinator`):
 ```bash
 sudo ufw --force reset
 sudo ufw default deny incoming
@@ -96,10 +103,10 @@ sudo ufw default allow outgoing
 sudo ufw allow from 10.10.10.0/24 to any port 22 proto tcp comment 'Bastion SSH'
 
 # Storage Fabric Ports (Restricted to Storage Subnet 192.168.100.0/24 only)
-sudo ufw allow from 192.168.100.0/24 to any port 9100 proto tcp comment 'Rokka Raft'
-sudo ufw allow from 192.168.100.0/24 to any port 9200 proto tcp comment 'Kdouja Metadata'
-sudo ufw allow from 192.168.100.0/24 to any port 9300 proto tcp comment 'Ahmodi Chunk Fabric'
-sudo ufw allow from 192.168.100.0/24 to any port 9400 proto tcp comment 'Abodi Telemetry'
+sudo ufw allow from 192.168.100.0/24 to any port 57774 proto tcp comment 'Rokka Raft HTTPS'
+sudo ufw allow from 192.168.100.0/24 to any port 7774  proto tcp comment 'Rokka Raft gRPC'
+sudo ufw allow from 192.168.100.0/24 to any port 57775 proto tcp comment 'Abodi Storage Chunk Fabric'
+sudo ufw allow from 192.168.100.0/24 to any port 57776 proto tcp comment 'Abodi Telemetry REST'
 
 # Prometheus Metrics Scrape
 sudo ufw allow from 10.10.20.50 to any port 9090 proto tcp comment 'Prometheus Server'
@@ -117,15 +124,16 @@ sudo firewall-cmd --permanent --new-zone=aarkam-fabric
 sudo firewall-cmd --permanent --zone=aarkam-fabric --add-source=192.168.100.0/24
 
 # Add storage fabric ports to private zone
-sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=9100/tcp
-sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=9200/tcp
-sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=9300/tcp
-sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=9400/tcp
+sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=57774/tcp
+sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=7774/tcp
+sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=57775/tcp
+sudo firewall-cmd --permanent --zone=aarkam-fabric --add-port=57776/tcp
 
 # Public / Ingress zone on Gateway Nodes
-sudo firewall-cmd --permanent --zone=public --add-port=5001/tcp
-sudo firewall-cmd --permanent --zone=public --add-port=8443/tcp
-sudo firewall-cmd --permanent --zone=public --add-port=8080/tcp
+sudo firewall-cmd --permanent --zone=public --add-port=57771/tcp
+sudo firewall-cmd --permanent --zone=public --add-port=7771/tcp
+sudo firewall-cmd --permanent --zone=public --add-port=57772/tcp
+sudo firewall-cmd --permanent --zone=public --add-port=7772/tcp
 
 sudo firewall-cmd --reload
 ```

@@ -28,16 +28,16 @@ flowchart TB
         Operator --> AMCLI
     end
 
-    subgraph Tier2Plane["Tier 2: Enterprise Cloud & Ingress Tier (AarkamIO V-1.0.0)"]
+    subgraph Tier2Plane["Aarkam - SCT (Storage Centers Tier): Enterprise Cloud (AarkamIO V-1.0.0)"]
         direction TB
-        AarkamWeb["AarkamIO Web Console & Management Portal<br/>(Ports: 5000 / 5001 & 7771 / 57771)"]
+        AarkamWeb["AarkamIO Web Console & Management Portal<br/>(Ports: 7771 / 57771)"]
         GenesisPortal["Genesis Ceremony Activation Engine (/genesis)<br/>Hardware Fingerprint Lock (ARK-FP-...)"]
         IAM["Zero-Trust Identity, OpenID Connect & RBAC Engine"]
-        S3Ingress["S3 REST Ingress & Application Gateway<br/>(Ports: 8080 / 8443)"]
+        S3Ingress["S3 REST Ingress & Application Gateway<br/>(Ports: 7772 / 57772)"]
         HangfireEngine["Hangfire Distributed Asynchronous Task Engine"]
     end
 
-    subgraph Tier1Substrate["Tier 1: Sovereign Storage Substrate (Rokka & Abodi)"]
+    subgraph Tier1Substrate["Aarkam - SAT (Standalone Tier): Sovereign Storage Substrate (Rokka & Abodi)"]
         direction TB
         subgraph QuorumConsensus["Quorum & Control Tier"]
             RokkaCoord["Rokka Coordinator (rokka-coordinator)<br/><b>Stable Release: Releases/Rokka/V-1.0.0</b><br/>Raft MON Quorum | HRW Placement | Port 7774 / 57774"]
@@ -73,7 +73,7 @@ flowchart TB
 ### 1.1 The Role of Each Component in the Ecosystem
 
 1. **`AarkamIO` (This Release — `Releases/AarkamIO/V-1.0.0`)**:
-   - The central **Tier 2 Enterprise Cloud & Control Plane**.
+   - The central **Aarkam - SCT (Storage Centers Tier)** Enterprise Cloud & Control Plane.
    - Serves the multi-tenant Web Management Console, OpenID Connect SSO/IAM identity subsystem, S3-compatible application ingress gateway, asynchronous Hangfire job pipeline, and the zero-trust Genesis Ceremony activation wizard (`/genesis`).
 2. **`Abodi` (`Releases/Abodi/V-1.0.0`)**:
    - The **Storage Node Daemon & Hardware Profiler**.
@@ -93,7 +93,7 @@ Before beginning installation, verify that the target infrastructure satisfies e
 
 ### 2.1 Hardware Requirements
 
-| Subsystem | Minimum Specification (PoC / Edge) | Production Recommendation (Tier 2 Control Plane) | Enterprise High-Throughput Cluster |
+| Subsystem | Minimum Specification (PoC / Edge) | Production Recommendation (Aarkam - SCT Control Plane) | Enterprise High-Throughput Cluster |
 | :--- | :--- | :--- | :--- |
 | **CPU Architecture** | x86_64 (Intel 64 / AMD64) | x86_64 (Intel Xeon Silver / AMD EPYC 7002+) | x86_64 (Intel Xeon Gold/Platinum / AMD EPYC 9004+) |
 | **CPU Core Count** | 4 Physical Cores | 8–16 Physical Cores | 32+ Physical Cores |

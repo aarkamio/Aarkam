@@ -14,7 +14,7 @@
 
 ## 1. System Overview & Architecture
 
-The **Aarkam Tier 1 Sovereign Storage Substrate** provides an autonomous, enterprise-grade, high-performance object and key-value storage fabric designed specifically for air-gapped sovereign environments where external internet connectivity is strictly prohibited (zero telemetry, zero cloud callbacks).
+The **Aarkam - SAT (Standalone Tier)** Sovereign Storage Substrate provides an autonomous, enterprise-grade, high-performance object and key-value storage fabric designed specifically for air-gapped sovereign environments where external internet connectivity is strictly prohibited (zero telemetry, zero cloud callbacks).
 
 ```mermaid
 flowchart TB

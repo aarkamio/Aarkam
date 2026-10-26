@@ -6,7 +6,7 @@
 | **Document Identifier** | `ARK-DOC-AARKAMIO-RELNOTES-V1.0.0` |
 | **Product** | AarkamIO Sovereign Enterprise Cloud & Control Plane |
 | **Release Version** | `V-1.0.0-GA (Production General Availability)` |
-| **Architecture Tier** | Tier 2 Enterprise Cloud, S3 Ingress & Management Control Plane |
+| **Architecture Tier** | Aarkam - SCT (Storage Centers Tier), S3 Ingress & Management Control Plane |
 | **Release Date** | October 2026 |
 | **Compliance Standards** | Saudi NCA ECC-2:2024, NCA CSCC-1:2023, FIPS 140-3 Zero-Trust Architecture |
 | **Official Customer Portal (AarkamCP)** | [https://aarkam.io/](https://aarkam.io/) |
@@ -16,7 +16,7 @@
 
 ## 1. Executive Summary & Ecosystem Unification
 
-**AarkamIO V-1.0.0-GA** represents the official production milestone and crown jewel of the Aarkam Sovereign Object Storage Platform. Operating as the central **Tier 2 Enterprise Cloud & Control Plane**, AarkamIO unifies, orchestrates, and manages the entire Aarkam sovereign ecosystem.
+**AarkamIO V-1.0.0-GA** represents the official production milestone and crown jewel of the Aarkam Sovereign Object Storage Platform. Operating as the central **Aarkam - SCT (Storage Centers Tier)** Enterprise Cloud & Control Plane, AarkamIO unifies, orchestrates, and manages the entire Aarkam sovereign ecosystem.
 
 AarkamIO is specifically architected to operate in conjunction with the autonomous, stable standalone components already released across the platform:
 
@@ -28,16 +28,16 @@ flowchart TD
         Operator --> AMCLI
     end
 
-    subgraph Tier2Plane["Tier 2: Enterprise Cloud & Control Plane (AarkamIO)"]
+    subgraph Tier2Plane["Aarkam - SCT (Storage Centers Tier): Enterprise Cloud (AarkamIO)"]
         direction TB
-        AarkamWeb["AarkamIO Web Console & Management Portal<br/>(Ports 5000 / 5001 & 7771 / 57771)"]
+        AarkamWeb["AarkamIO Web Console & Management Portal<br/>(Ports 7771 / 57771)"]
         GenesisPortal["Genesis Ceremony Activation Engine (/genesis)<br/>Hardware Fingerprint Lock (ARK-FP-...)"]
         IAM["Zero-Trust Identity, OpenID Connect & RBAC"]
-        S3Ingress["S3 REST Ingress & Application Gateway<br/>(Ports 8080 / 8443)"]
+        S3Ingress["S3 REST Ingress & Application Gateway<br/>(Ports 7772 / 57772)"]
         HangfireEngine["Hangfire Distributed Asynchronous Task Engine"]
     end
 
-    subgraph Tier1Substrate["Tier 1: Sovereign Storage Substrate (Rokka & Abodi)"]
+    subgraph Tier1Substrate["Aarkam - SAT (Standalone Tier): Sovereign Storage Substrate (Rokka & Abodi)"]
         direction TB
         subgraph QuorumConsensus["Quorum & Control Tier"]
             RokkaCoord["Rokka Coordinator (rokka-coordinator)<br/><b>Stable Release: Releases/Rokka/V-1.0.0</b><br/>Raft MON Quorum | HRW Placement | Port 7774 / 57774"]

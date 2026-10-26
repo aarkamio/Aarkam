@@ -53,7 +53,7 @@ flowchart TD
    - **Ahmodi** automatically begins background re-silvering of affected chunks to free disks on healthy nodes.
    - S3 client read/write operations continue with zero interruption and zero perceptible latency degradation.
 2. **Node Offline / Power Outage**:
-   - Rokka consensus heartbeat (Port 9100) detects node absence within 150 milliseconds.
+   - Rokka consensus heartbeat (Port 57774 / 7774) detects node absence within 150 milliseconds.
    - If the node is a Raft Follower, quorum is maintained and the cluster remains fully operational.
    - If the node is the Raft Leader, an election completes in $< 500\text{ ms}$, electing a new leader transparently.
    - If the node remains offline for $> 15\text{ minutes}$, Ahmodi triggers full fleet re-balancing.
@@ -78,7 +78,7 @@ sequenceDiagram
     Ops->>LB: 1. Drain traffic from Gateway Node 1
     LB-->>GW: Traffic rerouted to Gateway Nodes 2 & 3
     Ops->>GW: 2. Stop aarkam-io service & update binaries
-    Ops->>GW: 3. Restart aarkam-io & verify local health check (curl -k :5001/api/v1/health)
+    Ops->>GW: 3. Restart aarkam-io & verify local health check (curl -k :57771/api/v1/health)
     Ops->>LB: 4. Re-enable Gateway Node 1 in load balancer pool
     
     Ops->>Cluster: 5. Put Storage Node 1 into Maintenance Mode (am node drain <node-id>)
@@ -107,7 +107,7 @@ flowchart LR
         AppDR["Disaster Recovery Workloads"] -.->|"On Failover"| S3DR
     end
 
-    PrimaryStore ==>|"Encrypted TLS Replication Stream (Port 8443)"| S3DR
+    PrimaryStore ==>|"Encrypted TLS Replication Stream (Port 57772)"| S3DR
 ```
 
 ### 4.1 Configuring Cross-Region Replication Policy
@@ -118,7 +118,7 @@ Replication policies are configured via the AarkamIO CLI or Admin REST API:
 # Create replication target endpoint binding
 am replication target add \
   --name "JEDDAH-DR-SITE" \
-  --endpoint "https://dr.storage.aarkam.sa:8443" \
+  --endpoint "https://dr.storage.aarkam.sa:57772" \
   --access-key "AKIA_DR_REPLICATION_USER" \
   --secret-key "SEC_KEY_XXXXXXXXXXXXXXXXXXXX"
 

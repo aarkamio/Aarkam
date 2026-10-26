@@ -7,7 +7,7 @@
 | **Release Version** | `v1.0.0-GA (General Availability)` |
 | **Release Date** | October 2026 |
 | **Architectural Role** | Unified Physical Storage Node Agent & Hardware Telemetry Engine |
-| **Dependency Scope** | Core Foundation for **Tier 1 (Rokka Substrate)** & **Tier 2 (Aarkam.IO Cloud)** |
+| **Dependency Scope** | Core Foundation for **Aarkam - SAT (Standalone Tier: Rokka Substrate)** & **Aarkam - SCT (Storage Centers Tier: Aarkam.IO Cloud)** |
 | **Compliance Level** | Saudi NCA ECC-2:2024, NCA CSCC-1:2023, FIPS 140-3 Zero-Trust Architecture |
 | **Target Distribution** | Zero-Egress Air-Gapped Datacenters (Linux x64, Windows Server x64) |
 
@@ -18,8 +18,8 @@
 **Abodi v1.0.0-GA** represents the official production milestone of Aarkam's hardware diagnostics, storage node agent, and telemetry daemon.
 
 As the physical foundation of the Aarkam ecosystem, **Abodi runs on every storage node host across both tiers**:
-1. **Tier 1 (Aarkam Rokka Sovereign Storage Substrate)**: Powers direct NVMe block I/O, sector-aligned chunk allocation for Cauchy Reed-Solomon erasure coding, and real-time health-weighted placement scores.
-2. **Tier 2 (Aarkam.IO Sovereign Enterprise Cloud Platform)**: Feeds cluster telemetry, physical drive health, anomaly detection, and capacity planning metrics directly into the centralized management fabric.
+1. **Aarkam - SAT (Standalone Tier: Rokka Sovereign Storage Substrate)**: Powers direct NVMe block I/O, sector-aligned chunk allocation for Cauchy Reed-Solomon erasure coding, and real-time health-weighted placement scores.
+2. **Aarkam - SCT (Storage Centers Tier: Aarkam.IO Sovereign Enterprise Cloud Platform)**: Feeds cluster telemetry, physical drive health, anomaly detection, and capacity planning metrics directly into the centralized management fabric.
 
 Version 1.0.0-GA delivers complete autonomous operation in 100% disconnected, zero-egress air-gapped environments without external database dependencies, cloud callbacks, or runtime prerequisites.
 

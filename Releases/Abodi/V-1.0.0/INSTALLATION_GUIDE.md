@@ -5,7 +5,7 @@
 | :--- | :--- |
 | **Document Identifier** | `ARK-DOC-ABODI-INSTALL-v1.0.0` |
 | **Release Version** | `v1.0.0-GA (Production Stable)` |
-| **Architectural Scope** | Physical Storage Node Daemon for **Tier 1 (Rokka Substrate)** & **Tier 2 (Aarkam.IO Cloud)** |
+| **Architectural Scope** | Physical Storage Node Daemon for **Aarkam - SAT (Standalone Tier: Rokka Substrate)** & **Aarkam - SCT (Storage Centers Tier: Aarkam.IO Cloud)** |
 | **Target Audience** | Datacenter Storage Engineers, Infrastructure Administrators, Defense Systems Engineers |
 | **Compliance Level** | Saudi NCA ECC-2:2024, NCA CSCC-1:2023, FIPS 140-3 Zero-Trust Architecture |
 | **Target Distribution** | Zero-Egress Air-Gapped Datacenters (Linux x64, Windows Server x64) |
@@ -17,8 +17,8 @@
 The **Abodi Sovereign Storage & Diagnostics Node Daemon** provides local hardware management, storage direct I/O, NVMe/SMART predictive maintenance, and zero-loss telemetry transport for physical nodes in an Aarkam deployment.
 
 Abodi operates as the common substrate for both tiers of Aarkam:
-- **Tier 1 (Rokka Sovereign Engine)**: Exposes sector-aligned 66,048-byte physical page allocation via embedded Kdouja `PageStore`, enabling high-performance Cauchy Reed-Solomon erasure coding and hedged reads.
-- **Tier 2 (Aarkam.IO Sovereign Enterprise Cloud)**: Collects comprehensive hardware manifests, thermal telemetry, and failure predictions to maintain real-time cluster health.
+- **Aarkam - SAT (Standalone Tier: Rokka Sovereign Engine)**: Exposes sector-aligned 66,048-byte physical page allocation via embedded Kdouja `PageStore`, enabling high-performance Cauchy Reed-Solomon erasure coding and hedged reads.
+- **Aarkam - SCT (Storage Centers Tier: Aarkam.IO Sovereign Enterprise Cloud)**: Collects comprehensive hardware manifests, thermal telemetry, and failure predictions to maintain real-time cluster health.
 
 ```mermaid
 flowchart TB

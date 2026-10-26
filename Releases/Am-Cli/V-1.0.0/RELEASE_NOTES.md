@@ -1,4 +1,4 @@
-# Aarkam Sovereign Cloud & Tier 1 Storage Substrate
+# Aarkam Sovereign Cloud (Aarkam - SCT) & Standalone Storage Substrate (Aarkam - SAT)
 # Standalone AM CLI Release Notes (Version V-1.0.0-GA)
 
 | Release Metadata | Specification |
