@@ -1,6 +1,8 @@
 name: Publish Abodi Docker Image
 
 on:
+  release:
+    types: [published]
   push:
     paths:
       - 'Releases/Abodi/**'
@@ -45,6 +47,9 @@ jobs:
           file: ./Dockerfile.release
           push: true
           tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:v1.0.1
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:1.0.1
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/abodi:v1.0.1
             ${{ secrets.DOCKERHUB_USERNAME }}/abodi:1.0.1
             ${{ secrets.DOCKERHUB_USERNAME }}/abodi:latest

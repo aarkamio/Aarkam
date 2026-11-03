@@ -75,7 +75,7 @@ The standalone native release bundles and official container images are distribu
 | :--- | :--- | :--- | :---: |
 | **`abodi-v1.0.1-linux-x64.zip`** | Linux x64 (RHEL 9+, Ubuntu 22.04+) | Standalone `Abodi` ELF binary, XML docs, `appsettings.json`, `install-abodi.sh` | **~51 MB** |
 | **`abodi-v1.0.1-win-x64.zip`** | Windows Server x64 (2022/2025) | Standalone `Abodi.exe`, XML docs, `appsettings.json`, `web.config`, `install-abodi.ps1` | **~52 MB** |
-| **`aarkam/abodi:v1.0.1`** | OCI / Docker Container (Linux x64) | Enterprise hardened container image with embedded `smartmontools`, `nvme-cli`, `lm-sensors`, `iproute2` | [Docker Hub Repository](https://hub.docker.com/repositories/aarkam) |
+| **`aarkam/aarkam.abodi:v1.0.1`** | OCI / Docker Container (Linux x64) | Enterprise hardened container image with embedded `smartmontools`, `nvme-cli`, `lm-sensors`, `iproute2` | [Docker Hub Repository](https://hub.docker.com/r/aarkam/aarkam.abodi) |
 
 > [!NOTE]
 > Both native release archives are single-file, self-contained distributions requiring zero external .NET runtime installations on target host servers. The Docker image is available on Docker Hub under the `aarkam` organization.
@@ -86,7 +86,7 @@ The standalone native release bundles and official container images are distribu
 
 ### 5.1 Docker Container Deployment (Docker Hub)
 
-Abodi is officially published to Docker Hub at [https://hub.docker.com/repositories/aarkam](https://hub.docker.com/repositories/aarkam) (`aarkam/abodi:v1.0.1`).
+Abodi is officially published to Docker Hub at [https://hub.docker.com/r/aarkam/aarkam.abodi](https://hub.docker.com/r/aarkam/aarkam.abodi) (`aarkam/aarkam.abodi:v1.0.1`).
 
 #### A. Run via Docker CLI (Direct I/O Hardware Mode)
 ```bash
@@ -102,14 +102,14 @@ docker run -d \
   -e ASPNETCORE_ENVIRONMENT=Production \
   -e Node__NodeCode="NODE-DOCKER-01" \
   -e Rokka__CoordinatorUrl="https://rokka-coordinator.rokka.internal:57774" \
-  aarkam/abodi:v1.0.1
+  aarkam/aarkam.abodi:v1.0.1
 ```
 
 #### B. Run via Docker Compose
 ```yaml
 services:
   abodi:
-    image: aarkam/abodi:v1.0.1
+    image: aarkam/aarkam.abodi:v1.0.1
     container_name: abodi-agent
     restart: unless-stopped
     cap_add:

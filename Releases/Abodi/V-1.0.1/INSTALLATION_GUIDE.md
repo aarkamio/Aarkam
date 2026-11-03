@@ -143,14 +143,14 @@ docker run -d \
   -p 57776:57776 \
   -e Node__NodeCode="NODE-DOCKER-01" \
   -e Rokka__CoordinatorUrl="https://rokka-coordinator.rokka.internal:57774" \
-  aarkam/abodi:v1.0.1
+  aarkam/aarkam.abodi:v1.0.1
 ```
 
 ### 6.2 Docker Compose Deployment
 ```yaml
 services:
   abodi:
-    image: aarkam/abodi:v1.0.1
+    image: aarkam/aarkam.abodi:v1.0.1
     restart: unless-stopped
     cap_add:
       - SYS_RAWIO
