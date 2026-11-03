@@ -50,6 +50,11 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:v1.0.1
             ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:1.0.1
             ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/abodi:v1.0.1
-            ${{ secrets.DOCKERHUB_USERNAME }}/abodi:1.0.1
-            ${{ secrets.DOCKERHUB_USERNAME }}/abodi:latest
+
+      - name: Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi
+          readme-filepath: Releases/Abodi/DOCKER_README.md
