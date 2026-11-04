@@ -53,8 +53,9 @@ jobs:
 
       - name: Update Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
+        continue-on-error: true
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi
+          repository: aarkam/aarkam.abodi
           readme-filepath: Releases/Abodi/DOCKER_README.md
