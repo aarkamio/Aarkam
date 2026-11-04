@@ -1,13 +1,13 @@
-name: Publish Abodi Docker Image
+name: Publish Rokka Docker Image
 
 on:
   release:
     types: [published]
   push:
     paths:
-      - 'Releases/Abodi/**'
-      - 'Dockerfile.release'
-      - '.github/workflows/docker-publish.yml'
+      - 'Releases/Rokka/**'
+      - 'Dockerfile.rokka.release'
+      - '.github/workflows/docker-publish-rokka.yml'
   workflow_dispatch:
     inputs:
       version:
@@ -17,8 +17,13 @@ on:
 
 jobs:
   build-and-push:
-    name: Build & Push Docker Image
+    name: Build & Push Rokka Docker Image
     runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'release' ||
+      startsWith(github.event.release.tag_name, 'rokka') ||
+      contains(github.event.release.name, 'Rokka') ||
+      github.event.release.tag_name == 'v1.0.1'
 
     steps:
       - name: Checkout Repository
@@ -27,8 +32,8 @@ jobs:
       - name: Stage Release Payload
         run: |
           mkdir -p dist/linux
-          unzip -o Releases/Abodi/V-1.0.1/abodi-v1.0.1-linux-x64.zip -d dist/linux/
-          chmod +x dist/linux/Abodi dist/linux/install-abodi.sh
+          unzip -o Releases/Rokka/V-1.0.1/rokka-v1.0.1-linux-x64.zip -d dist/linux/
+          chmod +x dist/linux/rokka-coordinator dist/linux/rokka-gateway dist/linux/install-rokka.sh dist/linux/entrypoint.sh 2>/dev/null || true
           ls -la dist/linux/
 
       - name: Set up Docker Buildx
@@ -44,12 +49,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.release
+          file: ./Dockerfile.rokka.release
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:v1.0.1
-            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:1.0.1
-            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:v1.0.1
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:1.0.1
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:latest
 
       - name: Update Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
@@ -57,5 +62,5 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: aarkam/aarkam.abodi
-          readme-filepath: Releases/Abodi/DOCKER_README.md
+          repository: aarkam/aarkam.rokka
+          readme-filepath: Releases/Rokka/V-1.0.1/DOCKER_README.md

@@ -1,0 +1,53 @@
+# =========================================================================
+# Aarkam Rokka Sovereign Storage Engine & Distributed Fabric (v1.0.1)
+# Production Container Image (Option A: Release Artifact Distribution)
+# =========================================================================
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
+
+LABEL org.opencontainers.image.title="Aarkam Rokka Sovereign Storage Substrate" \
+      org.opencontainers.image.description="Stateless cluster control plane, Raft consensus quorum, and line-rate S3 streaming gateway" \
+      org.opencontainers.image.version="1.0.1" \
+      org.opencontainers.image.vendor="Aarkam.IO" \
+      org.opencontainers.image.licenses="Proprietary"
+
+# Install network utilities, certificates, and runtime prerequisites
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    libsqlite3-0 \
+    procps \
+    net-tools \
+    iproute2 \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/lib/rokka/metadata \
+                /var/lib/rokka/data \
+                /var/log/rokka \
+                /etc/rokka \
+                /app \
+    && chmod 0700 /var/lib/rokka/metadata
+
+WORKDIR /app
+
+# Copy release payload from dist/linux
+COPY dist/linux/ /app/
+
+# Ensure execution permissions on native binaries and scripts
+RUN chmod +x /app/rokka-coordinator /app/rokka-gateway /app/install-rokka.sh /app/entrypoint.sh 2>/dev/null || true
+
+# Expose standard Rokka ports:
+# 7774:  Coordinator HTTP (Cleartext gRPC & Health Probe)
+# 57774: Coordinator HTTPS (mTLS Control & Raft Quorum)
+# 7772:  Gateway HTTP (S3 REST & Ingestion Data Plane)
+# 57772: Gateway HTTPS (Secure S3 REST Gateway)
+EXPOSE 7774 57774 7772 57772
+
+# Persistent state volumes
+VOLUME ["/var/lib/rokka/metadata", "/var/lib/rokka/data", "/var/log/rokka", "/etc/rokka"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://127.0.0.1:7774/health || curl -f http://127.0.0.1:7772/health || exit 1
+
+# Default execution starts both Coordinator and Gateway via entrypoint script
+ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh"]
+CMD ["all"]

@@ -1,0 +1,65 @@
+name: Publish Abodi Docker Image
+
+on:
+  release:
+    types: [published]
+  push:
+    paths:
+      - 'Releases/Abodi/**'
+      - 'Dockerfile.release'
+      - '.github/workflows/docker-publish.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image Version Tag (e.g. 1.0.1)'
+        required: true
+        default: '1.0.1'
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'release' ||
+      startsWith(github.event.release.tag_name, 'abodi') ||
+      contains(github.event.release.name, 'Abodi')
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Stage Release Payload
+        run: |
+          mkdir -p dist/linux
+          unzip -o Releases/Abodi/V-1.0.1/abodi-v1.0.1-linux-x64.zip -d dist/linux/
+          chmod +x dist/linux/Abodi dist/linux/install-abodi.sh
+          ls -la dist/linux/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.release
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:v1.0.1
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:1.0.1
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.abodi:latest
+
+      - name: Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        continue-on-error: true
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: aarkam/aarkam.abodi
+          readme-filepath: Releases/Abodi/DOCKER_README.md
