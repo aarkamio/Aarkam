@@ -1,4 +1,10 @@
-# Unpacked release working directories (only .zip archives and docs are tracked)
+# Release binary archives (hosted on GitHub Releases, never tracked in Git tree)
+Releases/**/*.zip
+Releases/**/*.tar.gz
+Releases/**/*.tgz
+Releases/**/*.7z
+
+# Unpacked release working directories (only markdown docs and checksums are tracked)
 Releases/V1.0.0-Beta/Aarkam.AM/
 Releases/V1.0.0-Beta/AarkamIO/
 Releases/**/win/
@@ -6,8 +12,11 @@ Releases/**/linux/
 Releases/**/win-x64/
 Releases/**/linux-x64/
 
-# Packages exceeding GitHub 100MB limit (stored locally in Releases, excluded from git blobs)
-Releases/**/rokka-substrate-*.zip
+# Whitelist markdown documentation and checksums in release directories
+!Releases/**/*.md
+!Releases/**/SHA256SUMS.txt
+!Releases/**/checksums.sha256
+!Releases/**/LICENSE
 
 # IDE / Build Artifacts
 .vs/
