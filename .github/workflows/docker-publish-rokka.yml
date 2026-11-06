@@ -125,18 +125,54 @@ jobs:
             fi
           fi
 
-          # Extract downloaded zip
-          ZIP_FILE=$(find /tmp/release-asset -name "*linux*.zip" 2>/dev/null | head -n 1)
-          if [ -n "$ZIP_FILE" ] && [ -f "$ZIP_FILE" ]; then
-            echo "Extracting ${ZIP_FILE} into dist/linux/..."
-            unzip -o "$ZIP_FILE" -d dist/linux/
-          fi
+          # Extract ALL downloaded zip archives into dist/linux/
+          echo "Extracting all staged zip archives from /tmp/release-asset/ into dist/linux/..."
+          for z in $(find /tmp/release-asset -name "*linux*.zip" 2>/dev/null); do
+            echo "--> Inflating $z into dist/linux/..."
+            unzip -o "$z" -d dist/linux/
+          done
 
-          # Stage entrypoint and scripts if available
+          # Stage entrypoint and scripts
           if [ -f "Releases/Rokka/V-${CLEAN_VER}/linux/entrypoint.sh" ] && [ ! -f "dist/linux/entrypoint.sh" ]; then
             cp "Releases/Rokka/V-${CLEAN_VER}/linux/entrypoint.sh" dist/linux/
+          elif [ -f "Releases/Rokka/V-1.0.2/linux/entrypoint.sh" ] && [ ! -f "dist/linux/entrypoint.sh" ]; then
+            cp "Releases/Rokka/V-1.0.2/linux/entrypoint.sh" dist/linux/
           elif [ -f "entrypoint.sh" ] && [ ! -f "dist/linux/entrypoint.sh" ]; then
             cp entrypoint.sh dist/linux/
+          fi
+
+          # Fallback entrypoint if still missing
+          if [ ! -f "dist/linux/entrypoint.sh" ]; then
+            echo "Generating fallback dist/linux/entrypoint.sh..."
+            cat <<'EOF' > dist/linux/entrypoint.sh
+#!/usr/bin/env bash
+set -Eeuo pipefail
+if [ "$#" -gt 0 ]; then
+    exec "$@"
+fi
+ROLE="${ROKKA_ROLE:-all}"
+case "${ROLE,,}" in
+    coordinator)
+        exec /app/rokka-coordinator
+        ;;
+    gateway)
+        exec /app/rokka-gateway
+        ;;
+    all|both|cluster)
+        /app/rokka-coordinator &
+        COORD_PID=$!
+        sleep 2
+        /app/rokka-gateway &
+        GW_PID=$!
+        trap "kill -TERM $COORD_PID $GW_PID 2>/dev/null || true; wait $COORD_PID $GW_PID 2>/dev/null || true" SIGINT SIGTERM
+        wait -n "$COORD_PID" "$GW_PID"
+        ;;
+    *)
+        echo "[ERROR] Unknown ROKKA_ROLE: '${ROLE}'"
+        exit 1
+        ;;
+esac
+EOF
           fi
 
           # Validation of required binaries

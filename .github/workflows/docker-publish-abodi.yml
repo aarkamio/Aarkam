@@ -125,12 +125,12 @@ jobs:
             fi
           fi
 
-          # Extract downloaded zip
-          ZIP_FILE=$(find /tmp/release-asset -name "*linux*.zip" 2>/dev/null | head -n 1)
-          if [ -n "$ZIP_FILE" ] && [ -f "$ZIP_FILE" ]; then
-            echo "Extracting ${ZIP_FILE} into dist/linux/..."
-            unzip -o "$ZIP_FILE" -d dist/linux/
-          fi
+          # Extract ALL downloaded zip archives into dist/linux/
+          echo "Extracting all staged zip archives from /tmp/release-asset/ into dist/linux/..."
+          for z in $(find /tmp/release-asset -name "*linux*.zip" 2>/dev/null); do
+            echo "--> Inflating $z into dist/linux/..."
+            unzip -o "$z" -d dist/linux/
+          done
 
           # Stage installer script if available
           if [ -f "Releases/Abodi/V-${CLEAN_VER}/linux/install-abodi.sh" ] && [ ! -f "dist/linux/install-abodi.sh" ]; then
