@@ -5,7 +5,7 @@
 # Abodi Sovereign Storage & Diagnostics Node Daemon
 ### Unified Physical Storage Node Agent, Direct NVMe I/O Substrate & Medical-Reasoning Hardware Telemetry Engine
 
-[![Version](https://img.shields.io/badge/version-v1.0.1--GA-blue.svg?style=for-the-badge&logo=semver)](https://github.com/aarkamio/Aarkam)
+[![Version](https://img.shields.io/badge/version-v1.0.2--GA-blue.svg?style=for-the-badge&logo=semver)](https://github.com/aarkamio/Aarkam)
 [![Docker Image](https://img.shields.io/badge/docker-aarkam%2Faarkam.abodi-2496ED.svg?style=for-the-badge&logo=docker)](https://hub.docker.com/r/aarkam/aarkam.abodi)
 [![Target OS](https://img.shields.io/badge/platform-Linux%20x64%20%7C%20Windows%20x64-333333.svg?style=for-the-badge&logo=linux)](https://github.com/aarkamio/Aarkam)
 [![Architecture](https://img.shields.io/badge/arch-x86__64%20(AVX2)-orange.svg?style=for-the-badge)](https://github.com/aarkamio/Aarkam)
@@ -69,7 +69,7 @@ Engineered strictly for **zero-egress, air-gapped sovereign datacenters**, Abodi
 
 | Tag | Target Architecture | Base OS | Description |
 | :--- | :--- | :--- | :--- |
-| **`v1.0.1`**, **`1.0.1`**, **`latest`** | `linux/amd64` (x86_64, AVX2) | Ubuntu 24.04 LTS Noble (`dotnet/aspnet:10.0`) | Official Production Release with embedded hardware diagnostic utilities (`smartmontools`, `nvme-cli`, `lm-sensors`, `iproute2`, `ethtool`). |
+| **`v1.0.2`**, **`1.0.2`**, **`latest`** | `linux/amd64` (x86_64, AVX2) | Ubuntu 24.04 LTS Noble (`dotnet/aspnet:10.0`) | Official Production Release with embedded hardware diagnostic utilities (`smartmontools`, `nvme-cli`, `lm-sensors`, `iproute2`, `ethtool`). |
 
 ---
 
@@ -97,7 +97,7 @@ docker run -d \
   -e Node__ClusterCode="ROKKA-PROD-CLUSTER" \
   -e Rokka__CoordinatorUrl="https://coordinator.rokka.internal:57774" \
   -e Security__EnrollmentToken="ET1.0123456789ABCDEF0123456789ABCDEF" \
-  aarkam/aarkam.abodi:v1.0.1
+  aarkam/aarkam.abodi:v1.0.2
 ```
 
 ### 4.2 Running with Docker Compose (Recommended)
@@ -109,7 +109,7 @@ version: '3.8'
 
 services:
   abodi:
-    image: aarkam/aarkam.abodi:v1.0.1
+    image: aarkam/aarkam.abodi:v1.0.2
     container_name: abodi-storage-daemon
     restart: unless-stopped
     cap_add:
@@ -226,7 +226,7 @@ curl -s http://localhost:7776/api/v1/health/ping
 {
   "status": "Healthy",
   "nodeCode": "STORAGE-NODE-01",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "uptimeSeconds": 86420,
   "healthScore": 0.985,
   "drives": [

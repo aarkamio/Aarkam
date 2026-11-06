@@ -1,12 +1,12 @@
 # =========================================================================
-# Aarkam AM CLI — Sovereign Fabric Management Utility (v1.0.1)
+# Aarkam AM CLI — Sovereign Fabric Management Utility (v1.0.2)
 # Production Container Image (Option A: Release Artifact Distribution)
 # =========================================================================
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
 
 LABEL org.opencontainers.image.title="Aarkam AM CLI" \
       org.opencontainers.image.description="Unified command-line interface & interactive REPL for Aarkam Sovereign Storage Fabric" \
-      org.opencontainers.image.version="1.0.1" \
+      org.opencontainers.image.version="1.0.2" \
       org.opencontainers.image.vendor="Aarkam.IO" \
       org.opencontainers.image.licenses="Proprietary"
 
@@ -32,7 +32,7 @@ RUN chmod +x /app/am /app/install-am.sh 2>/dev/null || true \
 
 # Environment defaults
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
-    ROKKA_COORDINATOR_URL="https://rokka-coordinator:57774"
+    ROKKA_COORDINATOR_URL="https://rokka-coordinator.aarkam:57774"
 
 # Volumes for working directory, certificates, and runtime configuration
 VOLUME ["/workspace", "/var/lib/aarkam", "/etc/aarkam"]

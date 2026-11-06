@@ -1,12 +1,12 @@
 # =========================================================================
-# Aarkam Rokka Sovereign Storage Engine & Distributed Fabric (v1.0.1)
+# Aarkam Rokka Sovereign Storage Engine & Distributed Fabric (v1.0.2)
 # Production Container Image (Option A: Release Artifact Distribution)
 # =========================================================================
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
 
 LABEL org.opencontainers.image.title="Aarkam Rokka Sovereign Storage Substrate" \
       org.opencontainers.image.description="Stateless cluster control plane, Raft consensus quorum, and line-rate S3 streaming gateway" \
-      org.opencontainers.image.version="1.0.1" \
+      org.opencontainers.image.version="1.0.2" \
       org.opencontainers.image.vendor="Aarkam.IO" \
       org.opencontainers.image.licenses="Proprietary"
 

@@ -3,17 +3,19 @@ name: Publish Rokka Docker Image
 on:
   release:
     types: [published]
-  push:
-    paths:
-      - 'Releases/Rokka/**'
-      - 'Dockerfile.rokka.release'
-      - '.github/workflows/docker-publish-rokka.yml'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Image Version Tag (e.g. 1.0.1)'
+        description: 'Image Version Tag (e.g. 1.0.2)'
         required: true
-        default: '1.0.1'
+        default: '1.0.2'
+      release_tag:
+        description: 'GitHub Release Tag to fetch binary from (e.g. v1.0.2 or v-1.0.2)'
+        required: false
+        default: 'v1.0.2'
+
+permissions:
+  contents: read
 
 jobs:
   build-and-push:
@@ -23,17 +25,121 @@ jobs:
       github.event_name != 'release' ||
       startsWith(github.event.release.tag_name, 'rokka') ||
       contains(github.event.release.name, 'Rokka') ||
-      github.event.release.tag_name == 'v1.0.1'
+      github.event.release.tag_name == 'v1.0.2' ||
+      github.event.release.tag_name == 'v-1.0.2'
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Stage Release Payload
+      - name: Resolve Version and Tag
+        id: meta
         run: |
-          mkdir -p dist/linux
-          unzip -o Releases/Rokka/V-1.0.1/rokka-v1.0.1-linux-x64.zip -d dist/linux/
+          if [ "${{ github.event_name }}" = "release" ]; then
+            RAW_TAG="${{ github.event.release.tag_name }}"
+          else
+            RAW_TAG="${{ github.event.inputs.release_tag || format('v{0}', github.event.inputs.version) }}"
+          fi
+          
+          # Clean version (strip leading 'v' or 'v-')
+          CLEAN_VER="${RAW_TAG#v-}"
+          CLEAN_VER="${CLEAN_VER#v}"
+          CLEAN_VER="${CLEAN_VER#-}"
+          if [ -z "${CLEAN_VER}" ]; then
+            CLEAN_VER="1.0.2"
+          fi
+          
+          echo "version=${CLEAN_VER}" >> $GITHUB_OUTPUT
+          echo "release_tag=${RAW_TAG}" >> $GITHUB_OUTPUT
+          echo "Resolved Version: ${CLEAN_VER}, Release Tag: ${RAW_TAG}"
+
+      - name: Stage Release Payload
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RAW_TAG: ${{ steps.meta.outputs.release_tag }}
+          CLEAN_VER: ${{ steps.meta.outputs.version }}
+        run: |
+          mkdir -p dist/linux /tmp/release-asset
+          echo "==> Staging Rokka release payload for Tag: ${RAW_TAG}, Clean Version: ${CLEAN_VER}"
+
+          FOUND=false
+          CANDIDATE_TAGS=("${RAW_TAG}" "v${CLEAN_VER}" "v-${CLEAN_VER}" "${CLEAN_VER}")
+
+          # Strategy 1: gh release download
+          for t in "${CANDIDATE_TAGS[@]}"; do
+            echo "Attempting gh release download for tag: $t..."
+            if gh release download "$t" --repo "aarkamio/Aarkam" --pattern "*rokka*linux*.zip" --dir /tmp/release-asset 2>/dev/null; then
+              FOUND=true
+              echo "Downloaded via gh release from aarkamio/Aarkam with tag $t"
+              break
+            elif gh release download "$t" --repo "${{ github.repository }}" --pattern "*rokka*linux*.zip" --dir /tmp/release-asset 2>/dev/null; then
+              FOUND=true
+              echo "Downloaded via gh release from ${{ github.repository }} with tag $t"
+              break
+            elif gh release download "$t" --repo "aarkamio/Aarkam" --pattern "*linux*.zip" --dir /tmp/release-asset 2>/dev/null; then
+              FOUND=true
+              echo "Downloaded generic linux zip via gh release from aarkamio/Aarkam with tag $t"
+              break
+            fi
+          done
+
+          # Strategy 2: Direct curl from GitHub Releases
+          if [ "$FOUND" = false ]; then
+            echo "gh release not matched; attempting direct curl download from GitHub Releases..."
+            CANDIDATE_URLS=(
+              "https://github.com/aarkamio/Aarkam/releases/download/${RAW_TAG}/rokka-v${CLEAN_VER}-linux-x64.zip"
+              "https://github.com/aarkamio/Aarkam/releases/download/v${CLEAN_VER}/rokka-v${CLEAN_VER}-linux-x64.zip"
+              "https://github.com/aarkamio/Aarkam/releases/download/v-${CLEAN_VER}/rokka-v${CLEAN_VER}-linux-x64.zip"
+              "https://github.com/aarkamio/Aarkam/releases/download/${RAW_TAG}/rokka-${RAW_TAG}-linux-x64.zip"
+              "https://github.com/aarkamio/Aarkam/releases/download/${RAW_TAG}/rokka-linux-x64.zip"
+            )
+            for url in "${CANDIDATE_URLS[@]}"; do
+              echo "Probing URL: $url"
+              if curl -sSL -f -o /tmp/release-asset/rokka-linux-x64.zip "$url"; then
+                FOUND=true
+                echo "Successfully downloaded via curl: $url"
+                break
+              fi
+            done
+          fi
+
+          # Strategy 3: Local workspace fallback
+          if [ "$FOUND" = false ]; then
+            if [ -f "Releases/Rokka/V-${CLEAN_VER}/rokka-v${CLEAN_VER}-linux-x64.zip" ]; then
+              echo "Using local release archive: Releases/Rokka/V-${CLEAN_VER}/rokka-v${CLEAN_VER}-linux-x64.zip"
+              cp "Releases/Rokka/V-${CLEAN_VER}/rokka-v${CLEAN_VER}-linux-x64.zip" /tmp/release-asset/
+              FOUND=true
+            elif [ -f "Releases/Rokka/V-${CLEAN_VER}/linux/rokka-coordinator" ]; then
+              echo "Using pre-extracted binaries from Releases/Rokka/V-${CLEAN_VER}/linux/"
+              cp -r Releases/Rokka/V-${CLEAN_VER}/linux/* dist/linux/
+              FOUND=true
+            fi
+          fi
+
+          # Extract downloaded zip
+          ZIP_FILE=$(find /tmp/release-asset -name "*linux*.zip" 2>/dev/null | head -n 1)
+          if [ -n "$ZIP_FILE" ] && [ -f "$ZIP_FILE" ]; then
+            echo "Extracting ${ZIP_FILE} into dist/linux/..."
+            unzip -o "$ZIP_FILE" -d dist/linux/
+          fi
+
+          # Stage entrypoint and scripts if available
+          if [ -f "Releases/Rokka/V-${CLEAN_VER}/linux/entrypoint.sh" ] && [ ! -f "dist/linux/entrypoint.sh" ]; then
+            cp "Releases/Rokka/V-${CLEAN_VER}/linux/entrypoint.sh" dist/linux/
+          elif [ -f "entrypoint.sh" ] && [ ! -f "dist/linux/entrypoint.sh" ]; then
+            cp entrypoint.sh dist/linux/
+          fi
+
+          # Validation of required binaries
+          if [ ! -f "dist/linux/rokka-coordinator" ] || [ ! -f "dist/linux/rokka-gateway" ]; then
+            echo "FATAL: Required Rokka binaries (rokka-coordinator, rokka-gateway) not found in dist/linux/!"
+            echo "Contents of dist/linux:"
+            ls -la dist/linux/ || true
+            exit 1
+          fi
+
           chmod +x dist/linux/rokka-coordinator dist/linux/rokka-gateway dist/linux/install-rokka.sh dist/linux/entrypoint.sh 2>/dev/null || true
+          echo "Payload staged successfully:"
           ls -la dist/linux/
 
       - name: Set up Docker Buildx
@@ -52,8 +158,8 @@ jobs:
           file: ./Dockerfile.rokka.release
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:v1.0.1
-            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:1.0.1
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:v${{ steps.meta.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:${{ steps.meta.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/aarkam.rokka:latest
 
       - name: Update Docker Hub Description
@@ -63,4 +169,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: aarkam/aarkam.rokka
-          readme-filepath: Releases/Rokka/V-1.0.1/DOCKER_README.md
+          readme-filepath: Releases/Rokka/V-1.0.2/DOCKER_README.md
