@@ -10,9 +10,9 @@ on:
         required: true
         default: '1.0.2'
       release_tag:
-        description: 'GitHub Release Tag to fetch binary from (e.g. v1.0.2 or v-1.0.2)'
+        description: 'GitHub Release Tag to fetch binary from (e.g. abodi-v1.0.2)'
         required: false
-        default: 'v1.0.2'
+        default: 'abodi-v1.0.2'
 
 permissions:
   contents: read
@@ -23,10 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name != 'release' ||
-      startsWith(github.event.release.tag_name, 'abodi') ||
-      contains(github.event.release.name, 'Abodi') ||
-      github.event.release.tag_name == 'v1.0.2' ||
-      github.event.release.tag_name == 'v-1.0.2'
+      startsWith(github.event.release.tag_name, 'abodi')
 
     steps:
       - name: Checkout Repository
@@ -38,15 +35,20 @@ jobs:
           if [ "${{ github.event_name }}" = "release" ]; then
             RAW_TAG="${{ github.event.release.tag_name }}"
           else
-            RAW_TAG="${{ github.event.inputs.release_tag || format('v{0}', github.event.inputs.version) }}"
+            RAW_TAG="${{ github.event.inputs.release_tag }}"
+            if [ -z "$RAW_TAG" ]; then
+              RAW_TAG="abodi-v${{ github.event.inputs.version }}"
+            fi
           fi
           
-          # Clean version (strip leading 'v' or 'v-')
-          CLEAN_VER="${RAW_TAG#v-}"
+          # Clean version: strip "abodi-v", "abodi-", "v-", "v"
+          CLEAN_VER="${RAW_TAG#abodi-v}"
+          CLEAN_VER="${CLEAN_VER#abodi-}"
+          CLEAN_VER="${CLEAN_VER#v-}"
           CLEAN_VER="${CLEAN_VER#v}"
           CLEAN_VER="${CLEAN_VER#-}"
           if [ -z "${CLEAN_VER}" ]; then
-            CLEAN_VER="1.0.2"
+            CLEAN_VER="${{ github.event.inputs.version || '1.0.2' }}"
           fi
           
           echo "version=${CLEAN_VER}" >> $GITHUB_OUTPUT
@@ -63,20 +65,27 @@ jobs:
           echo "==> Staging Abodi release payload for Tag: ${RAW_TAG}, Clean Version: ${CLEAN_VER}"
 
           FOUND=false
-          CANDIDATE_TAGS=("${RAW_TAG}" "v${CLEAN_VER}" "v-${CLEAN_VER}" "${CLEAN_VER}")
+          CANDIDATE_TAGS=(
+            "${RAW_TAG}"
+            "abodi-v${CLEAN_VER}"
+            "abodi-${CLEAN_VER}"
+            "v${CLEAN_VER}"
+            "v-${CLEAN_VER}"
+            "${CLEAN_VER}"
+          )
 
           # Strategy 1: gh release download
           for t in "${CANDIDATE_TAGS[@]}"; do
             echo "Attempting gh release download for tag: $t..."
-            if gh release download "$t" --repo "aarkamio/Aarkam" --pattern "*abodi*linux*.zip" --dir /tmp/release-asset 2>/dev/null; then
+            if gh release download "$t" --repo "aarkamio/Aarkam" --pattern "*abodi*linux*.zip" --dir /tmp/release-asset; then
               FOUND=true
               echo "Downloaded via gh release from aarkamio/Aarkam with tag $t"
               break
-            elif gh release download "$t" --repo "${{ github.repository }}" --pattern "*abodi*linux*.zip" --dir /tmp/release-asset 2>/dev/null; then
+            elif gh release download "$t" --repo "${{ github.repository }}" --pattern "*abodi*linux*.zip" --dir /tmp/release-asset; then
               FOUND=true
               echo "Downloaded via gh release from ${{ github.repository }} with tag $t"
               break
-            elif gh release download "$t" --repo "aarkamio/Aarkam" --pattern "*linux*.zip" --dir /tmp/release-asset 2>/dev/null; then
+            elif gh release download "$t" --repo "aarkamio/Aarkam" --pattern "*linux*.zip" --dir /tmp/release-asset; then
               FOUND=true
               echo "Downloaded generic linux zip via gh release from aarkamio/Aarkam with tag $t"
               break
@@ -88,14 +97,14 @@ jobs:
             echo "gh release not matched; attempting direct curl download from GitHub Releases..."
             CANDIDATE_URLS=(
               "https://github.com/aarkamio/Aarkam/releases/download/${RAW_TAG}/abodi-v${CLEAN_VER}-linux-x64.zip"
-              "https://github.com/aarkamio/Aarkam/releases/download/v${CLEAN_VER}/abodi-v${CLEAN_VER}-linux-x64.zip"
-              "https://github.com/aarkamio/Aarkam/releases/download/v-${CLEAN_VER}/abodi-v${CLEAN_VER}-linux-x64.zip"
+              "https://github.com/aarkamio/Aarkam/releases/download/abodi-v${CLEAN_VER}/abodi-v${CLEAN_VER}-linux-x64.zip"
               "https://github.com/aarkamio/Aarkam/releases/download/${RAW_TAG}/abodi-${RAW_TAG}-linux-x64.zip"
-              "https://github.com/aarkamio/Aarkam/releases/download/${RAW_TAG}/abodi-linux-x64.zip"
+              "https://github.com/aarkamio/Aarkam/releases/download/abodi-v${CLEAN_VER}/abodi-linux-x64.zip"
+              "https://github.com/aarkamio/Aarkam/releases/download/v${CLEAN_VER}/abodi-v${CLEAN_VER}-linux-x64.zip"
             )
             for url in "${CANDIDATE_URLS[@]}"; do
               echo "Probing URL: $url"
-              if curl -sSL -f -o /tmp/release-asset/abodi-linux-x64.zip "$url"; then
+              if curl -sSL -f ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /tmp/release-asset/abodi-linux-x64.zip "$url"; then
                 FOUND=true
                 echo "Successfully downloaded via curl: $url"
                 break
